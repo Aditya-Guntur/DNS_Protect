@@ -368,3 +368,32 @@ class Intelligence:
             level = assessment['legitimacy_level'].value
             breakdown[level] += 1
         return breakdown
+
+    def _generate_recommendations(self) -> List[str]:
+        """Generate actionable recommendations based on analysis"""
+        recommendations: List[str] = []
+
+        breakdown = self._get_legitimacy_breakdown()
+        high_risk = self.get_high_risk_domains()
+
+        if high_risk:
+            recommendations.append(f"Block or sinkhole {len(high_risk)} high-risk domains")
+
+        # Identify common negative indicators to suggest threshold tuning
+        flag_counter: Dict[str, int] = {}
+        for ass in self.final_assessments.values():
+            for neg in ass['evidence'].get('negative_indicators', []):
+                flag_counter[neg] = flag_counter.get(neg, 0) + 1
+
+        if flag_counter.get('high_entropy_subdomains', 0) >= 3:
+            recommendations.append('Tighten high-entropy thresholds or enable deeper inspection')
+        if flag_counter.get('excessive_query_frequency', 0) >= 3:
+            recommendations.append('Rate-limit or investigate sources with high DNS query rates')
+        if flag_counter.get('single_use_pattern', 0) >= 3:
+            recommendations.append('Inspect potential DNS tunneling with many single-use subdomains')
+
+        # General monitoring advice
+        if breakdown.get(LegitimacyLevel.SUSPICIOUS.value, 0) > 0:
+            recommendations.append('Enable monitoring for suspicious domains and collect more telemetry')
+
+        return recommendations
