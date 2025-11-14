@@ -53,6 +53,45 @@ DNS_Protect/
 This runs the `intelligence.py` scoring on three mocked domains and prints a report.
 
 
+## Installation
+
+- Ensure Python 3.9+.
+- Install dependencies:
+
+```
+pip install -r requirements.txt
+```
+
+Optional: set environment variable to enable web checks by default
+
+```
+set DNSP_ENABLE_WEB_CHECKS=true
+```
+
+You can also provide a `config.json` at the repository root to override defaults.
+
+
+## CLI Usage
+
+Run the full pipeline on a PCAP and print a JSON report:
+
+```
+python cli.py path/to/traffic.pcap --log-level INFO
+```
+
+Options:
+
+- `--config path/to/config.json` to load configuration.
+- `--out report.json` to write the full JSON report to a file.
+- `--enable-web-checks` to perform WHOIS/SSL/accessibility checks.
+
+Example:
+
+```
+python cli.py sample.pcap --enable-web-checks --out report.json
+```
+
+
 ## Implemented Status
 
 - **Statistical Filtering**: `filters/statistical_filter.py` implemented with frequency, entropy, single-use, TXT-heavy, rapid generation, and cardinality checks.
