@@ -50,7 +50,67 @@ DNS_Protect/
 └── utils/                # Helper functions and utilities
 ```
 
+This runs the `intelligence.py` scoring on three mocked domains and prints a report.
 
-## The project is still in development and is not yet ready for production use.
+
+## Installation
+
+- Ensure Python 3.9+.
+- Install dependencies:
+
+```
+pip install -r requirements.txt
+```
+
+Optional: set environment variable to enable web checks by default
+
+```
+set DNSP_ENABLE_WEB_CHECKS=true
+```
+
+You can also provide a `config.json` at the repository root to override defaults.
 
 
+## CLI Usage
+
+Run the full pipeline on a PCAP and print a JSON report:
+
+```
+python cli.py path/to/traffic.pcap --log-level INFO
+```
+
+Options:
+
+- `--config path/to/config.json` to load configuration.
+- `--out report.json` to write the full JSON report to a file.
+- `--enable-web-checks` to perform WHOIS/SSL/accessibility checks.
+
+Example:
+
+```
+python cli.py sample.pcap --enable-web-checks --out report.json
+```
+
+
+## Implemented Status
+
+- **Statistical Filtering**: `filters/statistical_filter.py` implemented with frequency, entropy, single-use, TXT-heavy, rapid generation, and cardinality checks.
+- **Set Analysis**: `filters/set_analyzer.py` implemented for high cardinality, single-use ratio, long labels, consonant-heavy heuristics.
+- **String Operations**: `utils/string_operations.py` implemented; `filters/string_analyzer.py` integrates for sequential and encoding-like patterns.
+- **Advanced Analysis**:
+  - `advanced_analysis/semantic_analyzer.py`: keyword, homoglyph-like, brand impersonation heuristics.
+  - `advanced_analysis/stealth_crawler.py`: wraps `utils/web_utils.WebAnalyzer` to collect accessibility, SSL, WHOIS, DNS, and page metadata into `models/website_profile.py`.
+- **Models**: `models/dns_query.py`, `models/suspicious_domain.py`, `models/website_profile.py` and exports in `models/__init__.py`.
+- **Intelligence Scoring**: `intelligence.py` now computes a weighted score, classifies (`LEGITIMATE`, `SUSPICIOUS`, `LIKELY_FAKE`, `CONFIRMED_FAKE`, `UNKNOWN`), and generates recommendations with confidence.
+
+Remaining items are enhancements only (ML, threat feeds, real blacklist integrations, full PCAP ingest pipeline orchestration).
+
+
+## Usage Notes
+
+- To integrate with real traffic:
+  - Parse packets to `DNSQuery` using `parsers/dns_extractor.py` or your PCAP pipeline.
+  - Feed batched `DNSQuery` into `StatisticalFilter.process_dns_queries()`.
+  - For flagged `SuspiciousDomain` items, run `StringAnalyzer` and `SetAnalyzer`.
+  - Optionally run `StealthCrawler` and `SemanticAnalyzer`.
+  - Collate analyzer outputs and call `Intelligence.analyze_domain()` per domain, or `bulk_analyze()`.
